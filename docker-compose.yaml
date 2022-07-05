@@ -1,0 +1,29 @@
+# to have this run first time around, please run go mod vendor first :)
+version: '3.4'
+services:
+  postgres:
+    image: postgres:10.17-alpine
+    environment:
+      POSTGRES_USER: username
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: db-news-feeder
+    ports:
+      - 5432:5432
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  api:
+    container_name: "news-feeder"
+    command: s
+    build:
+      context: .
+    volumes:
+      - .:/go/src/github.com/jeffreyyong/news-feeder
+    ports:
+      - 8080:8080
+      - 8082:8082
+      - 50051:50051
+    tty: true
+    restart: on-failure
+    depends_on:
+      - postgres
