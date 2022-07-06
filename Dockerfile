@@ -31,6 +31,5 @@ COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certifica
 COPY --from=build /app /
 COPY --from=build /build/migrations /migrations
 COPY config.yaml /
-COPY vault-secrets.toml /
 
 ENTRYPOINT ["/app"]

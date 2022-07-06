@@ -51,6 +51,11 @@ func (s *Service) ListArticles(ctx context.Context, filters *domain.SelectArticl
 	return nil, nil
 }
 
+// ListFeeds lists feeds that have been stored in the persistence layer.
+func (s *Service) ListFeeds(ctx context.Context, filters *domain.SelectFeedFilters) ([]*domain.Feed, error) {
+	return nil, nil
+}
+
 // 1. take the sources, for each feed, create Feed and create Article.
 func (s *Service) CrawlFeeds(ctx context.Context) error {
 	feeds, err := s.crawler.Crawl(ctx)
@@ -77,5 +82,4 @@ func (s *Service) CrawlFeeds(ctx context.Context) error {
 		return err
 	}
 	return nil
-	dd
 }

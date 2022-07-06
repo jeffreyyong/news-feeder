@@ -10,7 +10,7 @@ import (
 	gmux "github.com/gorilla/mux"
 	"gopkg.in/DataDog/dd-trace-go.v1/contrib/gorilla/mux"
 
-	"github.com/jeffreyyong/payment-gateway/internal/logging"
+	"github.com/jeffreyyong/news-feeder/internal/logging"
 )
 
 type Listener struct {

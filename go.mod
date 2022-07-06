@@ -9,7 +9,6 @@ require (
 	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
-	github.com/jeffreyyong/payment-gateway v0.0.0-20210621085446-a4aa67e0a890
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/jonboulle/clockwork v0.3.0
 	github.com/lib/pq v1.10.6

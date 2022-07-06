@@ -4,8 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/jeffreyyong/news-feeder/logging"
-	"go.uber.org/zap"
+	"github.com/jeffreyyong/news-feeder/internal/logging"
 )
 
 type Service interface {
@@ -28,6 +27,7 @@ func New(service Service, interval time.Duration) *Worker {
 
 func (w *Worker) Serve(ctx context.Context) error {
 	logging.Print(ctx, "starting worker")
+	logging.Print(ctx, w.interval.String())
 
 	ctx, w.ctxCancel = context.WithCancel(ctx)
 
@@ -40,9 +40,10 @@ func (w *Worker) Serve(ctx context.Context) error {
 			logging.Print(ctx, "stopped worker")
 			return nil
 		case <-ticker.C:
-			if err := w.service.CrawlFeeds(ctx); err != nil {
-				logging.Error(ctx, "failed to fetch articles", zap.Error(err))
-			}
+			logging.Print(ctx, "ticking")
+			// if err := w.service.CrawlFeeds(ctx); err != nil {
+			// 	logging.Error(ctx, "failed to fetch articles", zap.Error(err))
+			// }
 		}
 	}
 }

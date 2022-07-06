@@ -2,92 +2,58 @@ package main
 
 import (
 	"context"
+	"log"
 	"os"
-	"path"
 
 	"go.uber.org/zap"
 
 	"github.com/jeffreyyong/news-feeder/internal/app"
-	"github.com/jeffreyyong/news-feeder/internal/app/listeners/httplistener"
 	"github.com/jeffreyyong/news-feeder/internal/config"
 	"github.com/jeffreyyong/news-feeder/internal/crawler"
+	"github.com/jeffreyyong/news-feeder/internal/logging"
 	"github.com/jeffreyyong/news-feeder/internal/rss"
 	"github.com/jeffreyyong/news-feeder/internal/service"
 	"github.com/jeffreyyong/news-feeder/internal/store"
-	transporthttp "github.com/jeffreyyong/news-feeder/internal/transport/transporthttp"
-	"github.com/jeffreyyong/news-feeder/logging"
 	"github.com/jeffreyyong/news-feeder/pkg/apppostgres"
 	"github.com/jmoiron/sqlx"
+	cli "github.com/urfave/cli/v2"
 
-	"github.com/jonboulle/clockwork"
 	"github.com/pkg/errors"
 )
 
-const (
-	serviceName = "news-feeder"
-
-	defaultMigrationPath = "/migrations"
-)
+var command string
 
 func main() {
-	if err := app.Run(serviceName, setup); err != nil {
-		logging.Error(context.Background(), "failed to start service",
-			zap.String("service", serviceName),
-			zap.Error(err))
-		panic(err)
+	app := &cli.App{
+		Name:  "News Feeder",
+		Usage: "Aggregates news and feed them",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:        "command",
+				EnvVars:     []string{"COMMAND"},
+				Usage:       "The command to run",
+				Destination: &command,
+			},
+		},
+		Action: func(ctx *cli.Context) error {
+			if command == "server" {
+				return ctx.App.Run([]string{ctx.App.Name, "s"})
+			}
+			if command == "worker" {
+				return ctx.App.Run([]string{ctx.App.Name, "w"})
+			}
+			return ctx.App.Run([]string{ctx.App.Name, "h"})
+		},
+		Commands: []*cli.Command{
+			workerCommand,
+			serverCommand,
+		},
 	}
-}
 
-func setup(ctx context.Context, s *app.Service) ([]app.Listener, context.Context, error) {
-	s.OnShutdown(func() {
-		logging.Print(ctx, "shutdown",
-			zap.String("service", serviceName),
-		)
-	})
-
-	cfg, err := config.Load()
+	err := app.Run(os.Args)
 	if err != nil {
-		logging.Error(ctx, "loading_config", zap.Error(err))
-		return nil, ctx, err
+		log.Fatal(err)
 	}
-
-	store, err := store.New(cfg.PostgresDSN)
-	if err != nil {
-		logging.Error(ctx, "initialising store", zap.Error(err))
-		return nil, ctx, errors.Wrap(err, "initialising store")
-	}
-	migrationPath, err := migrationPath()
-	if err != nil {
-		logging.Error(ctx, "unable to get migration path", zap.Error(err))
-		return nil, ctx, errors.Wrap(err, "unable to get migration path")
-	}
-	if err = store.Migrate(migrationPath); err != nil {
-		logging.Error(ctx, "unable to migrate")
-		return nil, ctx, errors.Wrap(err, "unable to migrate repository")
-	}
-
-	svc, err := service.NewService(store, service.WithClock(clockwork.NewRealClock()))
-
-	if err != nil {
-		logging.Error(ctx, "creating_service", zap.Error(err))
-		return nil, ctx, err
-	}
-
-	h, err := transporthttp.NewHTTPHandler(svc, transporthttp.WithAuth(cfg.PrivilegedTokens))
-	if err != nil {
-		logging.Error(ctx, "creating_http_handler", zap.Error(err))
-		return nil, ctx, err
-	}
-
-	return []app.Listener{httplistener.New(h)}, ctx, nil
-}
-
-func migrationPath() (string, error) {
-	wd, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-	return path.Join(wd, defaultMigrationPath), nil
 }
 
 func newStore(ctx context.Context, s *app.Service, cfg config.Config) (*store.Store, error) {

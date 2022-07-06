@@ -14,8 +14,9 @@ const (
 
 // Config variables for the application
 type Config struct {
-	PostgresDSN      string            `yaml:"POSTGRES_DSN"`
+	PostgresDSN      string            `yaml:"postgres_dsn"`
 	PrivilegedTokens map[string]string `yaml:"privileged_tokens"`
+	MigrationPath    string            `yaml:"migration_path"`
 	URLSources       []string          `yaml:"url_sources"`
 	Worker           struct {
 		Interval int `yaml:"interval"`

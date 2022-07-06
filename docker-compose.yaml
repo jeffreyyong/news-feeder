@@ -9,11 +9,8 @@ services:
       POSTGRES_DB: db-news-feeder
     ports:
       - 5432:5432
-    volumes:
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-
   api:
-    container_name: "news-feeder"
+    container_name: "news-feeder-api"
     command: s
     build:
       context: .
@@ -21,8 +18,19 @@ services:
       - .:/go/src/github.com/jeffreyyong/news-feeder
     ports:
       - 8080:8080
-      - 8082:8082
-      - 50051:50051
+    tty: true
+    restart: on-failure
+    depends_on:
+      - postgres
+  worker:
+    container_name: "news-feeder-worker"
+    command: w
+    build:
+      context: .
+    volumes:
+      - .:/go/src/github.com/jeffreyyong/news-feeder
+    ports:
+      - 8081:8081
     tty: true
     restart: on-failure
     depends_on:

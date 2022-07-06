@@ -1,0 +1,6 @@
+postgres_dsn: "postgres://username:password@postgres:5432/db-news-feeder?sslmode=disable"
+migration_path: ./migrations
+privileged_tokens:
+  token-1: client-1
+worker:
+  interval: 5

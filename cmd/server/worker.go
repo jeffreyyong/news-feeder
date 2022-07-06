@@ -2,34 +2,32 @@ package main
 
 import (
 	"context"
-	"os"
 	"time"
 
 	"github.com/jeffreyyong/news-feeder/internal/app"
 	"github.com/jeffreyyong/news-feeder/internal/app/listeners/worker"
 	"github.com/jeffreyyong/news-feeder/internal/config"
-	"github.com/jeffreyyong/news-feeder/logging"
+	"github.com/jeffreyyong/news-feeder/internal/logging"
 	"github.com/pkg/errors"
 	cli "github.com/urfave/cli/v2"
 	"go.uber.org/zap"
 )
 
 const (
-	crawlerServiceName = "new-crawler"
+	workerServiceName = "worker"
 )
 
-var crawlerCommand = &cli.Command{
-	Name:    "crawler",
-	Aliases: []string{"c"},
-	Usage:   "Starts the crawler process.",
-	Action:  crawlerAction,
+var workerCommand = &cli.Command{
+	Name:    "worker",
+	Aliases: []string{"w"},
+	Usage:   "Starts the worker process.",
+	Action:  workerAction,
 }
 
-func crawlerAction(ctx *cli.Context) error {
-	if err := app.Run(crawlerServiceName, crawlerSetup); err != nil {
-		logging.From(ctx.Context).Fatal("failed to start crawler",
-			zap.String("env", os.Getenv("CURVE_NAMESPACE")),
-			zap.String("service", crawlerServiceName),
+func workerAction(ctx *cli.Context) error {
+	if err := app.Run(workerServiceName, workerSetup); err != nil {
+		logging.From(ctx.Context).Fatal("failed to start worker",
+			zap.String("service", workerServiceName),
 			zap.Error(err),
 		)
 		return err
@@ -37,11 +35,10 @@ func crawlerAction(ctx *cli.Context) error {
 	return nil
 }
 
-func crawlerSetup(ctx context.Context, s *app.Service) ([]app.Listener, context.Context, error) {
+func workerSetup(ctx context.Context, s *app.Service) ([]app.Listener, context.Context, error) {
 	s.OnShutdown(func() {
 		logging.Print(ctx, "shutdown",
-			zap.String("env", os.Getenv("CURVE_NAMESPACE")),
-			zap.String("service", crawlerServiceName),
+			zap.String("service", workerServiceName),
 		)
 	})
 

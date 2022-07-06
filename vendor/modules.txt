@@ -80,12 +80,6 @@ github.com/hashicorp/errwrap
 # github.com/hashicorp/go-multierror v1.1.1
 ## explicit; go 1.13
 github.com/hashicorp/go-multierror
-# github.com/jeffreyyong/payment-gateway v0.0.0-20210621085446-a4aa67e0a890
-## explicit; go 1.16
-github.com/jeffreyyong/payment-gateway/internal/app/context
-github.com/jeffreyyong/payment-gateway/internal/app/healthcheck
-github.com/jeffreyyong/payment-gateway/internal/app/listeners/httplistener
-github.com/jeffreyyong/payment-gateway/internal/logging
 # github.com/jmoiron/sqlx v1.3.5
 ## explicit; go 1.10
 github.com/jmoiron/sqlx

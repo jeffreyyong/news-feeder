@@ -7,7 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/jeffreyyong/payment-gateway/internal/logging"
+	"github.com/jeffreyyong/news-feeder/internal/logging"
+
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )

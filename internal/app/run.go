@@ -17,9 +17,9 @@ import (
 	"go.uber.org/automaxprocs/maxprocs"
 	"go.uber.org/zap"
 
-	"github.com/jeffreyyong/payment-gateway/internal/app/healthcheck"
-	"github.com/jeffreyyong/payment-gateway/internal/app/listeners/httplistener"
-	"github.com/jeffreyyong/payment-gateway/internal/logging"
+	"github.com/jeffreyyong/news-feeder/internal/app/healthcheck"
+	"github.com/jeffreyyong/news-feeder/internal/app/listeners/httplistener"
+	"github.com/jeffreyyong/news-feeder/internal/logging"
 )
 
 type Listener interface {
