@@ -4,3 +4,8 @@ privileged_tokens:
   token-1: client-1
 worker:
   interval: 5
+  url_sources:
+    - http://feeds.bbci.co.uk/news/uk/rss.xml 
+    - http://feeds.bbci.co.uk/news/technology/rss.xml 
+    - http://feeds.skynews.com/feeds/rss/uk.xml
+    - http://feeds.skynews.com/feeds/rss/technology.xml

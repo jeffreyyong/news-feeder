@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/jeffreyyong/news-feeder/internal/logging"
+	"go.uber.org/zap"
 )
 
 type Service interface {
@@ -41,9 +42,9 @@ func (w *Worker) Serve(ctx context.Context) error {
 			return nil
 		case <-ticker.C:
 			logging.Print(ctx, "ticking")
-			// if err := w.service.CrawlFeeds(ctx); err != nil {
-			// 	logging.Error(ctx, "failed to fetch articles", zap.Error(err))
-			// }
+			if err := w.service.CrawlFeeds(ctx); err != nil {
+				logging.Error(ctx, "failed to fetch articles", zap.Error(err))
+			}
 		}
 	}
 }

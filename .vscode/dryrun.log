@@ -1,0 +1,11 @@
+make --dry-run --always-make --keep-going --print-directory
+make: Entering directory `/Users/jeffrey/go/src/github.com/jeffreyyong/news-feeder'
+go install github.com/golang/mock/mockgen@v1.6.0
+go generate -x ./... --build_flags=--mod=mod
+command -v golangci-lint || curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b /Users/jeffrey/go/bin v1.33.0
+golangci-lint run --timeout=5m
+go fmt ./...
+go test -vet all ./...
+go build -o ./app ./cmd/server
+make: Leaving directory `/Users/jeffrey/go/src/github.com/jeffreyyong/news-feeder'
+ 

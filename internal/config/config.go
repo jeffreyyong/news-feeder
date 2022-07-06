@@ -17,9 +17,9 @@ type Config struct {
 	PostgresDSN      string            `yaml:"postgres_dsn"`
 	PrivilegedTokens map[string]string `yaml:"privileged_tokens"`
 	MigrationPath    string            `yaml:"migration_path"`
-	URLSources       []string          `yaml:"url_sources"`
 	Worker           struct {
-		Interval int `yaml:"interval"`
+		URLSources []string `yaml:"url_sources"`
+		Interval   int      `yaml:"interval"`
 	} `yaml:"worker"`
 }
 

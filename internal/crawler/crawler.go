@@ -8,6 +8,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/jeffreyyong/news-feeder/internal/domain"
+	"github.com/jeffreyyong/news-feeder/internal/logging"
 )
 
 type Parser interface {
@@ -34,26 +35,37 @@ func (c *Crawler) Crawl(ctx context.Context) ([]*domain.Feed, error) {
 	results := make(chan *domain.Feed)
 	g, ctx := errgroup.WithContext(ctx)
 
+	var feeds []*domain.Feed
+
+	go func() {
+		for result := range results {
+			feeds = append(feeds, result)
+		}
+	}()
+
 	for _, s := range c.sources {
 		source := s
+		logging.Print(ctx, source)
+
 		g.Go(func() error {
 			feed, err := c.feedParser.Parse(ctx, source)
 			if err != nil {
 				return fmt.Errorf("error parsing url (%s): %w", source, err)
 			}
+			logging.Print(ctx, "before send")
+
 			results <- feed
+			logging.Print(ctx, "after send")
 			return nil
 		})
 	}
 
+	logging.Print(ctx, "before wait")
+
 	if err := g.Wait(); err != nil {
 		return nil, err
 	}
+	logging.Print(ctx, "after wait")
 
-	var feeds []*domain.Feed
-
-	for result := range results {
-		feeds = append(feeds, result)
-	}
 	return feeds, nil
 }

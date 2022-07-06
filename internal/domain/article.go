@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/google/uuid"
+	uuid "github.com/kevinburke/go.uuid"
 )
 
 var (
@@ -14,6 +14,7 @@ var (
 
 type Article struct {
 	ID          uuid.UUID    `db:"id"`
+	FeedID      uuid.UUID    `db:"feed_ud"`
 	PublishedAt sql.NullTime `db:"published_at"`
 	CreatedAt   time.Time    `db:"created_at"`
 	UpdatedAt   sql.NullTime `db:"updated_at"`

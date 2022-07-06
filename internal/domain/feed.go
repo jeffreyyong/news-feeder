@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/google/uuid"
+	uuid "github.com/kevinburke/go.uuid"
 )
 
 var (

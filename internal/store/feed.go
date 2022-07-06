@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jeffreyyong/news-feeder/internal/domain"
@@ -12,7 +13,7 @@ var createFeedSQLErrors = map[string]error{
 	"feed_pkey": domain.ErrFeedAlreadyExists,
 }
 
-func (s Store) CreateFeed(ctx context.Context, feed *domain.Feed) error {
+func (s Store) CreateFeed(ctx context.Context, feed *domain.Feed) (string, error) {
 	clauses := map[string]interface{}{
 		"title":       feed.Title,
 		"description": feed.Description,
@@ -26,21 +27,28 @@ func (s Store) CreateFeed(ctx context.Context, feed *domain.Feed) error {
 	query, args, err := psql.
 		Insert("feed").
 		SetMap(clauses).
-		Suffix(`RETURNING id, created_at`).
+		Suffix(`RETURNING id`).
 		ToSql()
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	if err = s.connFromContext(ctx).GetContext(ctx, feed, query, args...); err != nil {
-		if pqErr, ok := err.(*pq.Error); ok {
+	row := s.connFromContext(ctx).QueryRowxContext(ctx, query, args...)
+	if row.Err() != nil {
+		if pqErr, ok := row.Err().(*pq.Error); ok {
 			if mappedErr, ok := createFeedSQLErrors[pqErr.Constraint]; ok {
-				return mappedErr
+				return "", mappedErr
 			}
 		}
-		return err
+		return "", row.Err()
 	}
-	return nil
+
+	var id string
+	err = row.Scan(&id)
+	if err != nil {
+		return "", fmt.Errorf("failed to return feed id: %w", err)
+	}
+	return id, nil
 }
 
 func applySelectFeedFilters(f *domain.SelectFeedFilters, query sq.SelectBuilder) sq.SelectBuilder {

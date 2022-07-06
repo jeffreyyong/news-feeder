@@ -6,17 +6,20 @@ import (
 	"fmt"
 
 	"github.com/jeffreyyong/news-feeder/internal/domain"
+	"github.com/jeffreyyong/news-feeder/internal/logging"
 	"github.com/jonboulle/clockwork"
+
+	uuid "github.com/kevinburke/go.uuid"
 )
 
 // Store is the db interface
 type Store interface {
 	ExecInTransaction(ctx context.Context, f func(ctx context.Context) error) error
 
-	CreateFeed(ctx context.Context, feed *domain.Feed) error
+	CreateFeed(ctx context.Context, feed *domain.Feed) (string, error)
 	SelectFeeds(ctx context.Context, f *domain.SelectFeedFilters) ([]*domain.Feed, error)
 
-	CreateArticle(ctx context.Context, article *domain.Article) error
+	CreateArticle(ctx context.Context, article *domain.Article) (string, error)
 	SelectArticles(ctx context.Context, f *domain.SelectArticleFilters) ([]*domain.Article, error)
 }
 
@@ -63,15 +66,21 @@ func (s *Service) CrawlFeeds(ctx context.Context) error {
 		return err
 	}
 
+	logging.Print(ctx, "finished crawling")
+
 	if err := s.store.ExecInTransaction(ctx, func(ctx context.Context) error {
 		for _, feed := range feeds {
-			err := s.store.CreateFeed(ctx, feed)
+			feedID, err := s.store.CreateFeed(ctx, feed)
 			if err != nil {
 				return fmt.Errorf("error creating feed in db: %w", err)
 			}
 
 			for _, article := range feed.Articles {
-				err := s.store.CreateArticle(ctx, article)
+				id, _ := uuid.FromString(feedID)
+				article.FeedID = id
+				logging.Print(ctx, "what is the feed ID")
+				logging.Print(ctx, article.FeedID.String())
+				_, err := s.store.CreateArticle(ctx, article)
 				if err != nil {
 					return fmt.Errorf("error creating article in db: %w", err)
 				}

@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jeffreyyong/news-feeder/internal/domain"
@@ -12,33 +13,41 @@ var createArticleSQLErrors = map[string]error{
 	"article_pkey": domain.ErrArticleAlreadyExists,
 }
 
-func (s Store) CreateArticle(ctx context.Context, article *domain.Article) error {
+func (s Store) CreateArticle(ctx context.Context, article *domain.Article) (string, error) {
 	clauses := map[string]interface{}{
-		"title":        article.Title,
-		"description":  article.Description,
-		"link":         article.Link,
-		"tumbnail_url": article.ThumbnailURL,
-		"updated_at":   article.UpdatedAt,
+		"title":         article.Title,
+		"description":   article.Description,
+		"link":          article.Link,
+		"thumbnail_url": article.ThumbnailURL,
+		"updated_at":    article.UpdatedAt,
+		"feed_id":       article.FeedID,
 	}
 
 	query, args, err := psql.
 		Insert("article").
 		SetMap(clauses).
-		Suffix(`RETURNING id, created_at`).
+		Suffix(`RETURNING id`).
 		ToSql()
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	if err = s.connFromContext(ctx).GetContext(ctx, article, query, args...); err != nil {
-		if pqErr, ok := err.(*pq.Error); ok {
+	row := s.connFromContext(ctx).QueryRowxContext(ctx, query, args...)
+	if row.Err() != nil {
+		if pqErr, ok := row.Err().(*pq.Error); ok {
 			if mappedErr, ok := createArticleSQLErrors[pqErr.Constraint]; ok {
-				return mappedErr
+				return "", mappedErr
 			}
 		}
-		return err
+		return "", row.Err()
 	}
-	return nil
+
+	var id string
+	err = row.Scan(&id)
+	if err != nil {
+		return "", fmt.Errorf("failed to return article id: %w", err)
+	}
+	return id, nil
 }
 
 func applySelectArticleFilters(f *domain.SelectArticleFilters, query sq.SelectBuilder) sq.SelectBuilder {

@@ -76,7 +76,7 @@ func newStore(ctx context.Context, s *app.Service, cfg config.Config) (*store.St
 
 func newService(ctx context.Context, s *app.Service, cfg config.Config, store *store.Store) (*service.Service, error) {
 	parser := rss.NewParser()
-	crawler := crawler.New(parser, cfg.URLSources)
+	crawler := crawler.New(parser, cfg.Worker.URLSources)
 	svc, err := service.New(store, crawler)
 	if err != nil {
 		return nil, err
