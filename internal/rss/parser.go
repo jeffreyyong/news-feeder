@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
 
 	"github.com/jeffreyyong/news-feeder/internal/domain"
 	"github.com/mmcdole/gofeed"
@@ -60,6 +61,11 @@ func (p *Parser) Parse(ctx context.Context, url string) (*domain.Feed, error) {
 		articles = append(articles, article)
 	}
 
+	var updatedAt time.Time
+	if f.UpdatedParsed != nil {
+		updatedAt = *f.UpdatedParsed
+	}
+
 	feed := &domain.Feed{
 		Title:       f.Title,
 		Description: f.Description,
@@ -67,6 +73,7 @@ func (p *Parser) Parse(ctx context.Context, url string) (*domain.Feed, error) {
 		FeedLink:    f.FeedLink,
 		Category:    category,
 		Language:    f.Language,
+		UpdatedAt:   updatedAt,
 		Articles:    articles,
 	}
 

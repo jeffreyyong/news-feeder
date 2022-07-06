@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"database/sql"
 	"errors"
 	"time"
 
@@ -13,9 +12,9 @@ var (
 )
 
 type Feed struct {
-	ID        uuid.UUID    `db:"id"`
-	CreatedAt time.Time    `db:"created_at"`
-	UpdatedAt sql.NullTime `db:"updated_at"`
+	ID        uuid.UUID `db:"id"`
+	CreatedAt time.Time `db:"created_at"`
+	UpdatedAt time.Time `db:"updated_at"`
 
 	Title       string `db:"title"`
 	Description string `db:"description"`

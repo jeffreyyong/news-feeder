@@ -22,6 +22,7 @@ func (s Store) CreateFeed(ctx context.Context, feed *domain.Feed) (string, error
 		"category":    feed.Category,
 		"language":    feed.Language,
 		"provider":    feed.Provider,
+		"updated_at":  feed.UpdatedAt,
 	}
 
 	query, args, err := psql.
