@@ -3,7 +3,6 @@ package transporthttp
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -19,30 +18,40 @@ import (
 
 const (
 	EndpointListArticles = "/articles"
+	EndpointShareArticle = "/article/share"
 
 	ContentType     = "Content-Type"
 	ApplicationJSON = "application/json"
 )
 
-type Service interface {
+type FeedService interface {
 	ListArticles(ctx context.Context, f *domain.SelectArticleFilters) ([]*domain.Article, error)
 	ListFeeds(ctx context.Context, f *domain.SelectFeedFilters) ([]*domain.Feed, error)
+}
+
+type SocialService interface {
+	Share(ctx context.Context, articleLink string, medium domain.Medium) error
 }
 
 // httpHandler is the http handler that will enable
 // calls to this service via HTTP REST
 type httpHandler struct {
-	service         Service
+	feedService     FeedService
+	socialService   SocialService
 	middlewareFuncs []mux.MiddlewareFunc
 }
 
 // NewHTTPHandler will create a new instance of httpHandler
-func NewHTTPHandler(service Service, opts ...MiddlewareFunc) (*httpHandler, error) {
-	if service == nil {
-		return nil, fmt.Errorf("%w: service", errors.New("some error"))
+func NewHTTPHandler(feedService FeedService, socialService SocialService, opts ...MiddlewareFunc) (*httpHandler, error) {
+	if feedService == nil {
+		return nil, fmt.Errorf("nil feed service")
 	}
 
-	h := &httpHandler{service: service}
+	if socialService == nil {
+		return nil, fmt.Errorf("nil social service")
+	}
+
+	h := &httpHandler{feedService: feedService, socialService: socialService}
 	for _, opt := range opts {
 		if err := opt(h); err != nil {
 			return nil, err
@@ -55,7 +64,44 @@ func NewHTTPHandler(service Service, opts ...MiddlewareFunc) (*httpHandler, erro
 // ApplyRoutes will link the HTTP REST endpoint to the corresponding function in this handler
 func (h *httpHandler) ApplyRoutes(m *httplistener.Mux) {
 	m.HandleFunc(EndpointListArticles, h.ListArticles).Methods(http.MethodGet)
+	m.HandleFunc(EndpointShareArticle, h.ShareArticle).Methods(http.MethodPost)
 	m.Use(h.middlewareFuncs...)
+}
+
+func (h *httpHandler) ShareArticle(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	type ReqBody struct {
+		Medium      string `json:"medium"`
+		ArticleLink string `json:"link"`
+	}
+
+	var reqBody ReqBody
+
+	err := json.NewDecoder(r.Body).Decode(&reqBody)
+	if err != nil {
+		errMsg := "bad request body"
+		logging.Error(ctx, errMsg, zap.Error(err))
+		_ = WriteError(w, errMsg, CodeBadRequest)
+		return
+	}
+
+	medium := domain.Medium(reqBody.Medium)
+
+	if _, ok := domain.SupportedMedium[medium]; !ok {
+		errMsg := "unsupported sharing medium"
+		logging.Error(ctx, errMsg, zap.Error(err))
+		_ = WriteError(w, errMsg, CodeBadRequest)
+		return
+	}
+
+	err = h.socialService.Share(ctx, reqBody.ArticleLink, medium)
+	if err != nil {
+		errMsg := "error sharing article"
+		logging.Error(ctx, errMsg, zap.Error(err))
+		_ = WriteError(w, errMsg, CodeUnknownFailure)
+		return
+	}
 }
 
 func (h *httpHandler) ListArticles(w http.ResponseWriter, r *http.Request) {
@@ -125,13 +171,12 @@ func (h *httpHandler) ListArticles(w http.ResponseWriter, r *http.Request) {
 		selectArticlesFilter.Offset = &offsetInt
 	}
 
-	articles, err := h.service.ListArticles(ctx, selectArticlesFilter)
+	articles, err := h.feedService.ListArticles(ctx, selectArticlesFilter)
 	if err != nil {
 		errMsg := "error getting articles"
 		logging.Error(ctx, errMsg, zap.Error(err))
 		_ = WriteError(w, errMsg, CodeUnknownFailure)
 		return
-
 	}
 
 	w.Header().Add(ContentType, ApplicationJSON)

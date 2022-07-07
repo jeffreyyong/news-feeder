@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/jeffreyyong/news-feeder/internal/rss"
 	"github.com/jeffreyyong/news-feeder/internal/service"
 	"github.com/jeffreyyong/news-feeder/internal/store"
+	"github.com/jeffreyyong/news-feeder/internal/twitter"
 	"github.com/jeffreyyong/news-feeder/pkg/apppostgres"
 	"github.com/jmoiron/sqlx"
 	cli "github.com/urfave/cli/v2"
@@ -78,6 +80,24 @@ func newService(ctx context.Context, s *app.Service, cfg config.Config, store *s
 	parser := rss.NewParser()
 	crawler := crawler.New(parser, cfg.Worker.URLSources)
 	svc, err := service.New(store, crawler)
+	if err != nil {
+		return nil, err
+	}
+	return svc, nil
+}
+
+func newSocialService(ctx context.Context, s *app.Service, cfg config.Config, store *store.Store) (*service.SocialService, error) {
+	twitterCreds := twitter.Creds{
+		ConsumerKey:    cfg.Social.Twitter.ConsumerKey,
+		ConsumerSecret: cfg.Social.Twitter.ConsumerSecret,
+		AccessToken:    cfg.Social.Twitter.AccessToken,
+		AccessSecret:   cfg.Social.Twitter.AccessSecret,
+	}
+	twitterClient, err := twitter.NewClient(twitterCreds)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialise twitter client: %w", err)
+	}
+	svc, err := service.NewSocialService(store, twitterClient)
 	if err != nil {
 		return nil, err
 	}

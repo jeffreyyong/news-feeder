@@ -21,6 +21,14 @@ type Config struct {
 		URLSources []string `yaml:"url_sources"`
 		Interval   int      `yaml:"interval"`
 	} `yaml:"worker"`
+	Social struct {
+		Twitter struct {
+			ConsumerKey    string `yaml:"consumer_key"`
+			ConsumerSecret string `yaml:"consumer_secret"`
+			AccessToken    string `yaml:"access_token"`
+			AccessSecret   string `yaml:"access_secret"`
+		} `yaml:"twitter"`
+	} `yaml:"social"`
 }
 
 // Load loads the configuration for the application.

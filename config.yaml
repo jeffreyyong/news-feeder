@@ -9,3 +9,9 @@ worker:
     - http://feeds.bbci.co.uk/news/technology/rss.xml 
     - http://feeds.skynews.com/feeds/rss/uk.xml
     - http://feeds.skynews.com/feeds/rss/technology.xml
+social:
+  twitter:
+    consumer_key: xxxx
+    consumer_secret: xxxx
+    access_token: xxxx
+    access_secret: xxxxx

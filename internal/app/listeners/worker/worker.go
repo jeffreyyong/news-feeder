@@ -41,7 +41,7 @@ func (w *Worker) Serve(ctx context.Context) error {
 			logging.Print(ctx, "stopped worker")
 			return nil
 		case <-ticker.C:
-			logging.Print(ctx, "ticking")
+			logging.Print(ctx, "worker working")
 			if err := w.service.CrawlFeeds(ctx); err != nil {
 				logging.Error(ctx, "failed to fetch articles", zap.Error(err))
 			}

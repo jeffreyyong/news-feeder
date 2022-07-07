@@ -65,12 +65,17 @@ func serverSetup(ctx context.Context, s *app.Service) ([]app.Listener, context.C
 		logging.Print(ctx, "postgres database version stayed the same", zap.Uint("version", version))
 	}
 
-	svc, err := newService(ctx, s, cfg, store)
+	feedService, err := newService(ctx, s, cfg, store)
 	if err != nil {
-		return nil, ctx, errors.Wrap(err, "unable to create service")
+		return nil, ctx, errors.Wrap(err, "unable to create feed service")
 	}
 
-	h, err := transporthttp.NewHTTPHandler(svc, transporthttp.WithAuth(cfg.PrivilegedTokens))
+	socialService, err := newSocialService(ctx, s, cfg, store)
+	if err != nil {
+		return nil, ctx, errors.Wrap(err, "unable to create social service")
+	}
+
+	h, err := transporthttp.NewHTTPHandler(feedService, socialService, transporthttp.WithAuth(cfg.PrivilegedTokens))
 	if err != nil {
 		logging.Error(ctx, "creating_http_handler", zap.Error(err))
 		return nil, ctx, err
