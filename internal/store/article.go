@@ -21,12 +21,13 @@ func (s Store) CreateArticle(ctx context.Context, article *domain.Article) (stri
 		"thumbnail_url": article.ThumbnailURL,
 		"updated_at":    article.UpdatedAt,
 		"feed_id":       article.FeedID,
+		"guid":          article.GUID,
 	}
 
 	query, args, err := psql.
 		Insert("article").
 		SetMap(clauses).
-		Suffix(`RETURNING id`).
+		Suffix(`ON CONFLICT (guid) DO UPDATE SET guid = excluded.guid RETURNING id`).
 		ToSql()
 	if err != nil {
 		return "", err
@@ -51,9 +52,18 @@ func (s Store) CreateArticle(ctx context.Context, article *domain.Article) (stri
 }
 
 func applySelectArticleFilters(f *domain.SelectArticleFilters, query sq.SelectBuilder) sq.SelectBuilder {
+	if len(f.Categories) > 0 {
+		query = query.Where(sq.Eq{"feed.category": f.Categories})
+	}
+
+	if len(f.Providers) > 0 {
+		query = query.Where(sq.Eq{"feed.provider": f.Providers})
+	}
+
 	if f.Limit != nil {
 		query = query.Limit(*f.Limit)
 	}
+
 	if f.Offset != nil {
 		query = query.Offset(*f.Offset)
 	}
@@ -64,15 +74,18 @@ func applySelectArticleFilters(f *domain.SelectArticleFilters, query sq.SelectBu
 func (s Store) SelectArticles(ctx context.Context, f *domain.SelectArticleFilters) ([]*domain.Article, error) {
 	queryBuilder := psql.Select().
 		Columns(
-			"id",
-			"title",
-			"description",
-			"thumbnail_url",
-			"created_at",
-			"updated_at",
-			"published_at",
+			"article.id as id",
+			"article.title as title",
+			"article.description as description",
+			"article.thumbnail_url as thumbail_url",
+			"article.created_at as created_at",
+			"article.updated_at as updated_at",
+			"article.published_at as published_at",
+			"feed.category as category",
+			"feed.provider as provider",
 		).
 		From("article").
+		LeftJoin("feed ON article.feed_id = feed.id").
 		OrderBy("published_at DESC")
 
 	if f != nil {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/jeffreyyong/news-feeder/internal/domain"
@@ -30,11 +31,6 @@ func (p *Parser) Parse(ctx context.Context, url string) (*domain.Feed, error) {
 		return nil, errors.New("error parsing feed")
 	}
 
-	var category string
-	if len(f.Categories) > 0 {
-		category = f.Categories[0]
-	}
-
 	var articles []*domain.Article
 
 	for _, i := range f.Items {
@@ -57,6 +53,7 @@ func (p *Parser) Parse(ctx context.Context, url string) (*domain.Feed, error) {
 			Description:  i.Description,
 			Link:         i.Link,
 			ThumbnailURL: thumbnailURL,
+			GUID:         i.GUID,
 		}
 		articles = append(articles, article)
 	}
@@ -70,12 +67,38 @@ func (p *Parser) Parse(ctx context.Context, url string) (*domain.Feed, error) {
 		Title:       f.Title,
 		Description: f.Description,
 		Link:        f.Link,
-		FeedLink:    f.FeedLink,
-		Category:    category,
+		FeedLink:    url,
+		Category:    mapCategory(f.Link),
 		Language:    f.Language,
 		UpdatedAt:   updatedAt,
 		Articles:    articles,
+		Provider:    mapProvider(f.Link),
 	}
 
 	return feed, nil
+}
+
+func mapCategory(title string) domain.Category {
+	t := strings.ToLower(title)
+	switch {
+	case strings.Contains(t, "uk"):
+		return domain.CategoryUK
+	case strings.Contains(t, "technology"):
+		return domain.CategoryTechnology
+	default:
+		return domain.CategoryUnknown
+	}
+
+}
+
+func mapProvider(link string) domain.Provider {
+	l := strings.ToLower(link)
+	switch {
+	case strings.Contains(l, "sky"):
+		return domain.ProviderSky
+	case strings.Contains(l, "bbc"):
+		return domain.ProviderBBC
+	default:
+		return domain.ProviderUnknown
+	}
 }

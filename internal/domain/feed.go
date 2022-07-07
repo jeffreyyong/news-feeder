@@ -16,13 +16,13 @@ type Feed struct {
 	CreatedAt time.Time `db:"created_at"`
 	UpdatedAt time.Time `db:"updated_at"`
 
-	Title       string `db:"title"`
-	Description string `db:"description"`
-	Link        string `db:"link"`
-	FeedLink    string `db:"feed_link"`
-	Category    string `db:"category"`
-	Language    string `db:"language"`
-	Provider    string `db:"provider"`
+	Title       string   `db:"title"`
+	Description string   `db:"description"`
+	Link        string   `db:"link"`
+	FeedLink    string   `db:"feed_link"`
+	Category    Category `db:"category"`
+	Language    string   `db:"language"`
+	Provider    Provider `db:"provider"`
 
 	Articles []*Article
 }
@@ -32,4 +32,30 @@ type SelectFeedFilters struct {
 	Providers  []string
 	Limit      *uint64
 	Offset     *uint64
+}
+
+type Category string
+
+const (
+	CategoryTechnology Category = "Technology"
+	CategoryUK         Category = "UK"
+	CategoryUnknown    Category = "Unknown"
+)
+
+var SupportedCategory = map[Category]bool{
+	CategoryTechnology: true,
+	CategoryUK:         true,
+}
+
+type Provider string
+
+const (
+	ProviderBBC     Provider = "BBC"
+	ProviderSky     Provider = "Sky"
+	ProviderUnknown Provider = "Unknown"
+)
+
+var SupportedProvider = map[Provider]bool{
+	ProviderBBC: true,
+	ProviderSky: true,
 }

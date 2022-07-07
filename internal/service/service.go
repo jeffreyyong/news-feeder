@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/jeffreyyong/news-feeder/internal/domain"
-	"github.com/jeffreyyong/news-feeder/internal/logging"
 	"github.com/jonboulle/clockwork"
 
 	uuid "github.com/kevinburke/go.uuid"
@@ -51,7 +50,12 @@ func New(store Store, crawler Crawler, opts ...Option) (*Service, error) {
 
 // ListArticles lists articles that have been stored in the persistence layer.
 func (s *Service) ListArticles(ctx context.Context, filters *domain.SelectArticleFilters) ([]*domain.Article, error) {
-	return nil, nil
+	articles, err := s.store.SelectArticles(ctx, filters)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query articles: %w", err)
+	}
+
+	return articles, nil
 }
 
 // ListFeeds lists feeds that have been stored in the persistence layer.
@@ -66,8 +70,6 @@ func (s *Service) CrawlFeeds(ctx context.Context) error {
 		return err
 	}
 
-	logging.Print(ctx, "finished crawling")
-
 	if err := s.store.ExecInTransaction(ctx, func(ctx context.Context) error {
 		for _, feed := range feeds {
 			feedID, err := s.store.CreateFeed(ctx, feed)
@@ -78,8 +80,6 @@ func (s *Service) CrawlFeeds(ctx context.Context) error {
 			for _, article := range feed.Articles {
 				id, _ := uuid.FromString(feedID)
 				article.FeedID = id
-				logging.Print(ctx, "what is the feed ID")
-				logging.Print(ctx, article.FeedID.String())
 				_, err := s.store.CreateArticle(ctx, article)
 				if err != nil {
 					return fmt.Errorf("error creating article in db: %w", err)

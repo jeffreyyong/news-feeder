@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
@@ -16,7 +18,7 @@ import (
 )
 
 const (
-	EndpointListArticles = "/feeds"
+	EndpointListArticles = "/articles"
 
 	ContentType     = "Content-Type"
 	ApplicationJSON = "application/json"
@@ -52,21 +54,98 @@ func NewHTTPHandler(service Service, opts ...MiddlewareFunc) (*httpHandler, erro
 
 // ApplyRoutes will link the HTTP REST endpoint to the corresponding function in this handler
 func (h *httpHandler) ApplyRoutes(m *httplistener.Mux) {
-	m.HandleFunc(EndpointListArticles, h.ListFeeds).Methods(http.MethodGet)
+	m.HandleFunc(EndpointListArticles, h.ListArticles).Methods(http.MethodGet)
 	m.Use(h.middlewareFuncs...)
 }
 
-func (h *httpHandler) ListFeeds(w http.ResponseWriter, r *http.Request) {
+func (h *httpHandler) ListArticles(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	// get query params
+	categoryQuery := r.URL.Query().Get("categories")
+	categories := strings.Split(categoryQuery, ",")
+	domainCategories, err := mapCategory(categories)
+	if err != nil {
+		errMsg := "bad query params"
+		logging.Error(ctx, errMsg, zap.Error(err))
+		_ = WriteError(w, errMsg, CodeBadRequest)
+		return
+	}
+
+	providerQuery := r.URL.Query().Get("providers")
+	providers := strings.Split(providerQuery, ",")
+	domainProviders, err := mapProvider(providers)
+	if err != nil {
+		errMsg := "bad query params"
+		logging.Error(ctx, errMsg, zap.Error(err))
+		_ = WriteError(w, errMsg, CodeBadRequest)
+		return
+	}
+
+	limit := r.URL.Query().Get("limit")
+	limitInt, err := strconv.ParseUint(limit, 10, 64)
+	if err != nil {
+		errMsg := "bad query params"
+		logging.Error(ctx, errMsg, zap.Error(err))
+		_ = WriteError(w, errMsg, CodeBadRequest)
+		return
+	}
+
+	offset := r.URL.Query().Get("offset")
+	offsetInt, err := strconv.ParseUint(offset, 10, 64)
+	if err != nil {
+		errMsg := "bad query params"
+		logging.Error(ctx, errMsg, zap.Error(err))
+		_ = WriteError(w, errMsg, CodeBadRequest)
+		return
+	}
+
+	selectArticlesFilter := &domain.SelectArticleFilters{
+		Offset:     &offsetInt,
+		Limit:      &limitInt,
+		Categories: domainCategories,
+		Providers:  domainProviders,
+	}
+	articles, err := h.service.ListArticles(ctx, selectArticlesFilter)
+	if err != nil {
+		errMsg := "error getting articles"
+		logging.Error(ctx, errMsg, zap.Error(err))
+		_ = WriteError(w, errMsg, CodeUnknownFailure)
+		return
+
+	}
 
 	w.Header().Add(ContentType, ApplicationJSON)
-	feed := &Feed{Title: "ffobar"}
-	err := json.NewEncoder(w).Encode(feed)
+	err = json.NewEncoder(w).Encode(articles)
 	if err != nil {
 		errMsg := "error encoding json response"
 		logging.Error(ctx, errMsg, zap.Error(err))
 		_ = WriteError(w, errMsg, CodeUnknownFailure)
 		return
 	}
+}
+
+func mapCategory(categories []string) ([]domain.Category, error) {
+	domainCategories := make([]domain.Category, len(categories))
+
+	for _, c := range categories {
+		category := domain.Category(c)
+		if _, ok := domain.SupportedCategory[category]; !ok {
+			return nil, fmt.Errorf("unsupported category: %s", category)
+		}
+		domainCategories = append(domainCategories, category)
+	}
+	return domainCategories, nil
+}
+
+func mapProvider(providers []string) ([]domain.Provider, error) {
+	domainProviders := make([]domain.Provider, len(providers))
+
+	for _, c := range providers {
+		provider := domain.Provider(c)
+		if _, ok := domain.SupportedProvider[provider]; !ok {
+			return nil, fmt.Errorf("unsupported provider: %s", provider)
+		}
+		domainProviders = append(domainProviders, provider)
+	}
+	return domainProviders, nil
 }

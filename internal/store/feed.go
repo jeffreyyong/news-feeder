@@ -28,7 +28,7 @@ func (s Store) CreateFeed(ctx context.Context, feed *domain.Feed) (string, error
 	query, args, err := psql.
 		Insert("feed").
 		SetMap(clauses).
-		Suffix(`RETURNING id`).
+		Suffix(`ON CONFLICT (feed_link) DO UPDATE SET feed_link = excluded.feed_link RETURNING id`).
 		ToSql()
 	if err != nil {
 		return "", err
