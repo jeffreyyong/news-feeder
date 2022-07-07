@@ -37,9 +37,9 @@ type SelectFeedFilters struct {
 type Category string
 
 const (
-	CategoryTechnology Category = "Technology"
-	CategoryUK         Category = "UK"
-	CategoryUnknown    Category = "Unknown"
+	CategoryTechnology Category = "technology"
+	CategoryUK         Category = "uk"
+	CategoryUnknown    Category = "unknown"
 )
 
 var SupportedCategory = map[Category]bool{
@@ -50,9 +50,9 @@ var SupportedCategory = map[Category]bool{
 type Provider string
 
 const (
-	ProviderBBC     Provider = "BBC"
-	ProviderSky     Provider = "Sky"
-	ProviderUnknown Provider = "Unknown"
+	ProviderBBC     Provider = "bbc"
+	ProviderSky     Provider = "sky"
+	ProviderUnknown Provider = "unknown"
 )
 
 var SupportedProvider = map[Provider]bool{

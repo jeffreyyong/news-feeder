@@ -62,49 +62,69 @@ func (h *httpHandler) ListArticles(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	// get query params
 	categoryQuery := r.URL.Query().Get("categories")
-	categories := strings.Split(categoryQuery, ",")
-	domainCategories, err := mapCategory(categories)
-	if err != nil {
-		errMsg := "bad query params"
-		logging.Error(ctx, errMsg, zap.Error(err))
-		_ = WriteError(w, errMsg, CodeBadRequest)
-		return
+	var domainCategories []domain.Category
+	var err error
+	if categoryQuery != "" {
+		categories := strings.Split(categoryQuery, ",")
+		domainCategories, err = mapCategory(categories)
+		if err != nil {
+			errMsg := "bad query params"
+			logging.Error(ctx, errMsg, zap.Error(err))
+			_ = WriteError(w, errMsg, CodeBadRequest)
+			return
+		}
 	}
 
 	providerQuery := r.URL.Query().Get("providers")
-	providers := strings.Split(providerQuery, ",")
-	domainProviders, err := mapProvider(providers)
-	if err != nil {
-		errMsg := "bad query params"
-		logging.Error(ctx, errMsg, zap.Error(err))
-		_ = WriteError(w, errMsg, CodeBadRequest)
-		return
+	var domainProviders []domain.Provider
+	if providerQuery != "" {
+		providers := strings.Split(providerQuery, ",")
+		domainProviders, err = mapProvider(providers)
+		if err != nil {
+			errMsg := "bad query params"
+			logging.Error(ctx, errMsg, zap.Error(err))
+			_ = WriteError(w, errMsg, CodeBadRequest)
+			return
+		}
 	}
 
 	limit := r.URL.Query().Get("limit")
-	limitInt, err := strconv.ParseUint(limit, 10, 64)
-	if err != nil {
-		errMsg := "bad query params"
-		logging.Error(ctx, errMsg, zap.Error(err))
-		_ = WriteError(w, errMsg, CodeBadRequest)
-		return
+	var limitInt uint64
+	if limit != "" {
+		limitInt, err = strconv.ParseUint(limit, 10, 64)
+		if err != nil {
+			errMsg := "bad query params"
+			logging.Error(ctx, errMsg, zap.Error(err))
+			_ = WriteError(w, errMsg, CodeBadRequest)
+			return
+		}
 	}
 
 	offset := r.URL.Query().Get("offset")
-	offsetInt, err := strconv.ParseUint(offset, 10, 64)
-	if err != nil {
-		errMsg := "bad query params"
-		logging.Error(ctx, errMsg, zap.Error(err))
-		_ = WriteError(w, errMsg, CodeBadRequest)
-		return
+	var offsetInt uint64
+	if offset != "" {
+		offsetInt, err = strconv.ParseUint(offset, 10, 64)
+		if err != nil {
+			errMsg := "bad query params"
+			logging.Error(ctx, errMsg, zap.Error(err))
+			_ = WriteError(w, errMsg, CodeBadRequest)
+			return
+		}
 	}
 
 	selectArticlesFilter := &domain.SelectArticleFilters{
-		Offset:     &offsetInt,
-		Limit:      &limitInt,
 		Categories: domainCategories,
 		Providers:  domainProviders,
 	}
+
+	if limitInt != 0 {
+		selectArticlesFilter.Limit = &limitInt
+	}
+
+	if offsetInt != 0 {
+		selectArticlesFilter.Offset = &offsetInt
+	}
+
 	articles, err := h.service.ListArticles(ctx, selectArticlesFilter)
 	if err != nil {
 		errMsg := "error getting articles"

@@ -20,6 +20,7 @@ func (s Store) CreateArticle(ctx context.Context, article *domain.Article) (stri
 		"link":          article.Link,
 		"thumbnail_url": article.ThumbnailURL,
 		"updated_at":    article.UpdatedAt,
+		"published_at":  article.PublishedAt,
 		"feed_id":       article.FeedID,
 		"guid":          article.GUID,
 	}
@@ -77,12 +78,10 @@ func (s Store) SelectArticles(ctx context.Context, f *domain.SelectArticleFilter
 			"article.id as id",
 			"article.title as title",
 			"article.description as description",
-			"article.thumbnail_url as thumbail_url",
+			"article.thumbnail_url as thumbnail_url",
 			"article.created_at as created_at",
 			"article.updated_at as updated_at",
 			"article.published_at as published_at",
-			"feed.category as category",
-			"feed.provider as provider",
 		).
 		From("article").
 		LeftJoin("feed ON article.feed_id = feed.id").

@@ -2,7 +2,6 @@ package rss
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"strings"
 	"time"
@@ -42,9 +41,9 @@ func (p *Parser) Parse(ctx context.Context, url string) (*domain.Feed, error) {
 			}
 		}
 
-		var publishedAt sql.NullTime
+		var publishedAt time.Time
 		if i.PublishedParsed != nil {
-			publishedAt = sql.NullTime{Time: *i.PublishedParsed}
+			publishedAt = *i.PublishedParsed
 		}
 
 		article := &domain.Article{
@@ -68,11 +67,11 @@ func (p *Parser) Parse(ctx context.Context, url string) (*domain.Feed, error) {
 		Description: f.Description,
 		Link:        f.Link,
 		FeedLink:    url,
-		Category:    mapCategory(f.Link),
-		Language:    f.Language,
+		Category:    mapCategory(f.FeedLink),
+		Language:    strings.ToLower(f.Language),
 		UpdatedAt:   updatedAt,
 		Articles:    articles,
-		Provider:    mapProvider(f.Link),
+		Provider:    mapProvider(f.FeedLink),
 	}
 
 	return feed, nil
@@ -88,11 +87,10 @@ func mapCategory(title string) domain.Category {
 	default:
 		return domain.CategoryUnknown
 	}
-
 }
 
-func mapProvider(link string) domain.Provider {
-	l := strings.ToLower(link)
+func mapProvider(feedLink string) domain.Provider {
+	l := strings.ToLower(feedLink)
 	switch {
 	case strings.Contains(l, "sky"):
 		return domain.ProviderSky
