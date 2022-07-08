@@ -3,7 +3,8 @@ migration_path: ./migrations
 privileged_tokens:
   token-1: client-1
 worker:
-  interval: 5
+  # in seconds
+  interval: 10
   url_sources:
     - http://feeds.bbci.co.uk/news/uk/rss.xml 
     - http://feeds.bbci.co.uk/news/technology/rss.xml 
