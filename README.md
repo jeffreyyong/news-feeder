@@ -1,12 +1,10 @@
-# payment-gateway
+# news-feeder
 
 ## Description
 
 This service has two components running in separate containers:
 1. A REST API based application that allows a mobile client to list articles with filters such as provider and category. Client can also use it to share news articles via Twitter.
 2. A worker task that periodically parses the RSS feeds provided and saves it in the DB.
-
-It provides 4 payment actions: authorizate, void, capture and refund.
 
 
 ## How It Works
