@@ -68,6 +68,8 @@ func (h *httpHandler) ApplyRoutes(m *httplistener.Mux) {
 	m.Use(h.middlewareFuncs...)
 }
 
+// ShareArticle allows the client to share an interesting article link
+// Currently supported medium is Twitter.
 func (h *httpHandler) ShareArticle(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -104,6 +106,9 @@ func (h *httpHandler) ShareArticle(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// ListArticles allows the client to list the articles by "categories" and "providers".
+// Pagination is also supported by providing "limit" and "offset"
+// Example: GET /articles?categories=uk,technology&providers=bbc
 func (h *httpHandler) ListArticles(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	// get query params
